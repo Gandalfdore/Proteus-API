@@ -21,12 +21,12 @@ Clone the repository into your local machine and open the \Notebooks\Signal_gene
 * Device initializations
 
 * Defintion of pulses for quantum control
-	** Cos packet pulse
-	** Gaussian pulse
-	** DRAG pulse
-	** Simple sinusoid pulse
-	** Rabi pulse
-	** Readout pulse (for now it is the same as the Rabi pulse)
+	* Cos packet pulse
+	* Gaussian pulse
+	* DRAG pulse
+	* Simple sinusoid pulse
+	* Rabi pulse
+	* Readout pulse (for now it is the same as the Rabi pulse)
 
 * Task tables to manipulte the sequence of pulses and their triggering/synchronization
 
@@ -38,20 +38,20 @@ Clone the repository into your local machine and open the \Notebooks\Signal_gene
 #### The libraries (located in SourceFiles) are separated in two parts:
 
 * Libraries written by your truly for the quntum computing purposes (these define the API):
-	** initializers
-	** tasks
-	** pulse_lib
-	** helpers
-	** readers
+	* initializers
+	* tasks
+	* pulse_lib
+	* helpers
+	* readers
 
 * Libraries taken from the manifacturer Tabor Inc. (https://github.com/pgwijesinghe/taborelec-proteusawg-new)
 (these are the drivers for the device) under GPL license:
 
-	** pyte_visa_utils
-	** tep_interleaved_wave
-	** tep_task_table
-	** tevisainst
-	** teproteus
+	* pyte_visa_utils
+	* tep_interleaved_wave
+	* tep_task_table
+	* tevisainst
+	* teproteus
 
 
 
