@@ -1,5 +1,4 @@
 
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 import helpers
@@ -87,11 +86,13 @@ class Pulse():
     
     
     
-    def gaussian_pulse (self, amplitude, sigma, width_over_sigma, frequency):
+    def gaussian_pulse (self, I, Q, amplitude, sigma, width_over_sigma, frequency):
         """
         This method preapares a gaussian pulse.
         
         INPUTS:
+            I - 1st quadrature amplitude
+            Q - 2nd quadrature amplitude
             amplitude - the amplitude scaler of the signal, takes value [0 to 1]
             sigma - the sigma of the gaussian in [sec]
             width_over_sigma - how many sigmas wide is the pulse [sec] RECOMENDED VALUE == 4 or 5
@@ -148,8 +149,11 @@ class Pulse():
         sin = np.sin(2*np.pi*t*GAUS_FC)
         cos = np.cos(2*np.pi*t*GAUS_FC)
         gaussian = amplitude * (1/ss/np.sqrt(2*np.pi)/2) * np.exp(-(t**2)/2/(ss**2)) / normalization_factor
-        (i) = sin*gaussian
-        (q) = cos*gaussian
+        (i) = I*sin*gaussian
+        (q) = Q*cos*gaussian
+        
+        # phase_shift = np.arctan(I/Q)
+        # magn = np.sqrt(I**2 + Q**2)*np.sin(2*np.pi*t*GAUS_FC + phase_shift)*gaussian
         magn = (i) + (q)
         ####################
 
@@ -170,11 +174,13 @@ class Pulse():
     
     
     
-    def gaussian_drag_pulse (self, amplitude, sigma, width_over_sigma, beta, frequency):
+    def gaussian_drag_pulse (self, I, Q, amplitude, sigma, width_over_sigma, beta, frequency):
         """
         This method preapares a gaussian pulse with DRAG.
         
         INPUTS:
+            I - 1st quadrature amplitude
+            Q - 2nd quadrature amplitude
             amplitude - the amplitude scaler of the signal, takes value [0 to 1]
             sigma - the sigma of the gaussian in [sec]
             width_over_sigma - how many sigmas wide is the pulse [sec] RECOMENDED VALUE == 4 or 5
@@ -236,8 +242,9 @@ class Pulse():
         cos = np.cos(2*np.pi*t*GAUS_FC)
         gaussian = amplitude * (1/ss/np.sqrt(2*np.pi)/2) * np.exp(-(t**2)/2/(ss**2)) / normalization_factor
         gaussian_dragged = amplitude * (1 - beta*t/ss*2) * (1/ss/np.sqrt(2*np.pi)/2) * np.exp(-(t**2)/2/(ss**2)) / normalization_factor
-        (i) = sin*gaussian
-        (q) = cos*gaussian_dragged
+        (i) = I*sin*gaussian
+        (q) = Q*cos*gaussian_dragged
+        
         magn = (i) + (q)
         ####################
 
