@@ -16,7 +16,7 @@ Clone the repository into your local machine and open the \Notebooks\Signal_gene
 
 ## Table of Contents
 
-#### Sample code, to demonstrate the execution of the device's capabilities (especially for qunatum computing application), this would inculde:
+### Sample code, to demonstrate the execution of the device's capabilities (especially for qunatum computing application), this would inculde:
 
 * Device initializations
 
@@ -35,7 +35,7 @@ Clone the repository into your local machine and open the \Notebooks\Signal_gene
 * Readout with the Digitizer + ADC module
 
 
-#### The libraries (located in SourceFiles) are separated in two parts:
+### The libraries (located in SourceFiles) are separated in two parts:
 
 * Libraries written by your truly for the quntum computing purposes (these define the API):
 	* initializers
