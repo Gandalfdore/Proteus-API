@@ -1,9 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Feb  6 16:44:53 2023
 
-@author: Moon_Penguin
-"""
 import os
 from teproteus import TEProteusAdmin as TepAdmin
 from teproteus import TEProteusInst as TepInst
@@ -14,7 +9,7 @@ def connection_func ():
     
     print("\n=========CONNECTING=========")
 
-        # Connect to instrument via PXI
+    # Connect to instrument via PXI
     pid = os.getpid()
     print('process id {0}'.format(pid))
     
@@ -221,7 +216,7 @@ def digital_conv_func (array, max_dac, data_type):
 
 #####################################################################################
 
-def prepare_gaussian_pulse (sigma, width_over_sigma, frequency, SCLK, DUC_INTERP, max_dac, show_plot = True):
+def prepare_gaussian_pulse (sigma, width_over_sigma, frequency, SCLK, DUC_INTERP, show_plot = True):
     """This function blabla"""
     
     frequency = frequency / DUC_INTERP  ### see if this holds !!!!
@@ -311,12 +306,76 @@ def prepare_gaussian_pulse (sigma, width_over_sigma, frequency, SCLK, DUC_INTERP
 
 
     
-    return (i), (q), seglen_gauss
+    return (i), (q)
 
 
 ###########################################################
 
-def prepare_sin_pulse (width, frequency, SCLK, DUC_INTERP, max_dac, show_plot = True):
+def prepare_gaussian_drag_pulse (sigma, width_over_sigma, beta, frequency, SCLK, DUC_INTERP, show_plot = True):
+    """This function blabla"""
+    
+    frequency = frequency / DUC_INTERP  ### see if this holds !!!!
+    # SCLK = SCLK/2.5
+    
+
+    period = 1/frequency
+    delta_t = 1/SCLK ### how much time between each two sequential signal points
+    sigma_numerical = sigma/delta_t  ### how many datapoints within a sigma
+
+    print ("period = {0}[ns]".format(period*1e9))
+    print ("sigma = {0}[ns]".format(sigma*1e9))
+    print ("sigma_num = {0} datapoints ".format(sigma_numerical))
+
+    width = width_over_sigma*sigma_numerical # time width of the gaussian pulse, the width of the pulse terminates at 5*sigma, this is made by convention, it can be change to be (arbitrary number*sigma)
+    
+    print (width_over_sigma, sigma_numerical, width)
+    seglen_gauss = int(width)
+    print("Gaussian Segement length = {0} datapoints\n".format(seglen_gauss))
+    print("Gaussian Segement length (in time) = {0} [ns]]".format(width_over_sigma*sigma*1e9))
+
+################# WARNINGS AND CHECKS #######################
+
+    if DUC_INTERP != 1:
+        print ('Attention the DUC Interpreter has a value different then 1, mainly {0}. This will divide the frequency by {0}'.format(DUC_INTERP))
+    
+
+    if 5*period > sigma:
+        print ("\n!WARNING! Sigma is comparable to the period of the oscillation\n")
+    
+    seglen_gauss, normalization_factor = formatter(seglen_gauss)
+###########################################################
+
+    t = np.linspace(-1, 1, seglen_gauss, endpoint=False)
+    
+    ss = sigma_numerical / seglen_gauss
+
+    GAUS_FC = frequency * seglen_gauss * DUC_INTERP /2 / SCLK
+    
+#     print('Gaussian frequency = {0}[Mhz]'.format(SCLK * 2 * GAUS_FC / seglen_gauss / 1e6/ DUC_INTERP))  # the actual frequency of the sin wave in the gaussian
+    print('Gaussian frequency = {0}[Mhz]'.format(SCLK * 2 * GAUS_FC / seglen_gauss / 1e6))  # the actual frequency of the sin wave in the gaussian
+
+    ####################
+    sin = np.sin(2*np.pi*t*GAUS_FC)
+    cos = np.cos(2*np.pi*t*GAUS_FC)
+    gaussian = (1/ss/np.sqrt(2*np.pi)/2) * np.exp(-(t**2)/2/(ss**2)) / normalization_factor
+    gaussian_dragged = (1 - beta*t/ss*2) * (1/ss/np.sqrt(2*np.pi)/2) * np.exp(-(t**2)/2/(ss**2)) / normalization_factor
+    (i) = sin*gaussian
+    (q) = cos*gaussian_dragged
+    ####################
+    
+    if show_plot == True:
+        plt.plot(t, (i), '-',t, (q), '-')
+        plt.legend(['I','Q'])
+
+
+
+    
+    return (i), (q)
+
+
+###########################################################
+
+def prepare_sin_pulse (width, frequency, SCLK, DUC_INTERP, show_plot = True):
     """
     This funtion prepares a sin shaped pulse
     
@@ -369,8 +428,89 @@ def prepare_sin_pulse (width, frequency, SCLK, DUC_INTERP, max_dac, show_plot = 
         plt.legend(['I','Q'])
 
     
-    return (i), (q), seglen_pulse
+    return (i), (q)
 
+
+#############################################################
+
+def prepare_rabi_pulse (width_slope, width_plateau, frequency, SCLK, DUC_INTERP, show_plot = True):
+    """
+    This funtion prepares a sin shaped pulse
+    
+    INPUTS:
+        width_slope -  width of the slope part of the pulse in [sec]
+        width_plateau - width of the plateau part of the pulse in [sec]
+        frequency - of the signal in [Hz]
+        
+    OUTPUTS:
+        I component of the signal
+        Q component of the signal
+        The length of the pulse in terms of number of data point (to be used when assigning to the AWG memory)
+        """
+    
+    if DUC_INTERP != 1:
+        print ('====Attention the DUC Interpreter has a value different then 1!===='.format(DUC_INTERP))
+    
+    frequency = frequency / DUC_INTERP
+    # SCLK = SCLK/2.5
+    
+    period = 1/frequency
+    delta_t = 1/SCLK ### how much time between each two sequential signal points
+
+    print ("period = {0}[ns]".format(period*1e9))
+    
+    delta_bytes_slope = width_slope*SCLK
+    delta_bytes_plateau = width_plateau*SCLK
+    
+    delta_bytes_slope, normalization_factor = formatter(delta_bytes_slope) ### to give the data segments an acceptable by the machine length
+    delta_bytes_plateau, normalization_factor = formatter(delta_bytes_plateau) # ----//----
+    
+    tot_seglen = 2*delta_bytes_slope + delta_bytes_plateau
+
+    print("Rabi pulse segement length = {0} datapoints\n".format(tot_seglen))
+    print("Rabi pulse segement length (in time) = {0} [ns]]".format((2*width_slope + width_plateau)*1e9))
+
+    t = np.linspace(start= 0, stop= 1, num = tot_seglen, endpoint= False) 
+
+    ############## The envelope generation ##############
+    upward_slope = np.linspace (0, np.pi/2, delta_bytes_slope)
+    upward_slope = np.sin (upward_slope)
+
+    downward_slope = np.flip (upward_slope)
+
+    plateau = np.linspace (1, 1, delta_bytes_plateau)
+    
+    rabi_signal = np.concatenate ((upward_slope, plateau, downward_slope), axis = 0)
+    
+    print ('sin:',len(t),'rabi_signal:',len(rabi_signal))
+    
+    #########################################
+    
+    FC = 5 * frequency * tot_seglen * DUC_INTERP /2 / SCLK
+
+    print('Signal frequency = {0}[Mhz]'.format(frequency / 1e6))  # the actual frequency of the sin wave in the gaussian
+    
+    ####################
+    sin = np.sin(2*np.pi*t*FC)
+    cos = np.cos(2*np.pi*t*FC)
+
+    (i) = sin*rabi_signal
+    (q) = cos*rabi_signal
+    ####################
+    
+    if show_plot == True:
+        plt.plot(t, (i), '-',t, (q), '-')
+        plt.legend(['I','Q'])
+
+    
+    return (i), (q)
+
+#############################################################
+
+def prepare_readout_pulse (width_ramp, width, frequency, SCLK, DUC_INTERP, show_plot = True):
+    width = width_plateau
+    width_slope = width_ramp
+    return prepare_rabi_pulse (width_slope, width_plateau, frequency, SCLK, DUC_INTERP, show_plot = True)
 
 #############################################################
 
