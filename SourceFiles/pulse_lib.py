@@ -418,27 +418,105 @@ class Pulse():
             phase_shift - in [radians]
 
         RETURNS: 
-            The array that represents the signal
+            seglen_tot - The array that represents the signal
+            distance_1stpeak_marker_in_time - time distance between the marker's tip and the 1st crest [sec]
+            distance_bw_2_peaks_in_time - time distance between two crests in time [sec]
         """
         
         seglen = self.SCLK/frequency ### how many DAC events needed to form one period of this function
         print ("original seglen:", seglen)
         
-        seglen = seglen * num_of_periods 
-        
         seglen = int(helpers.formatter(seglen)[0])
+        # print ("formated seglen:", seglen)
+        
+        seglen = seglen * num_of_periods
         print ("formated seglen:", seglen)
 
-        x = np.linspace(start=0, stop=2 * np.pi * num_of_periods, num=seglen, endpoint=False) 
+        x = np.linspace(start= 0, stop=2 * np.pi * num_of_periods, num=seglen, endpoint=False) 
 
         y = amplitude * np.sin(x + phase_shift)
 
-        if self.show_plot == True:
-            plt.plot(x,y)
-            plt.xlabel('Radians') 
-            plt.ylabel('Amplitude') 
-            plt.title('Sinus')
+        # if self.show_plot == True:
+        #     plt.plot(x,y)
+        #     plt.xlabel('Radians') 
+        #     plt.ylabel('Amplitude') 
+        #     plt.title('Sinus')
+            
+        #===============Indexes of the sin peaks========================#
+        
+        
+        phase_shift_bytes = int((phase_shift/2/np.pi)*(seglen/num_of_periods))
+        
+        arg = seglen/4/num_of_periods - phase_shift_bytes
+        int_arg = int(arg)
+        # int_arg2 = int_arg + seglen/num_of_periods
+        
+        # print('bytes of phase shift:', phase_shift_bytes)
+        # print('index of the peak:', int_arg, 'y value of the arg', y[int_arg])
+        # print('index of the 2nd peak:', int_arg2, 'y value of 2nd peak', y[int(int_arg2)])
+        
+        #=====================================================================#
+        
+        
+        #===============Create the marker bump (triangle shaped)========================#
+        
+        seglen_triangle = 2048 # the smallest chunck available for waveform in the DDR memory
+        tr1 = np.linspace (start = 0, stop = 1, num = int(seglen_triangle/2), endpoint =False)
+        tr2 = np.linspace (start = 1, stop = 0, num = int(seglen_triangle/2), endpoint =False)
+        tr = np.concatenate((tr1, tr2), axis=None)
+        tr = amplitude * tr
+        #=====================================================================#
+        
+        
+        #===============Create some space between them (not mandatory)========================#
+        
+        seglen_space = 10*2048 # the smallest chunck available for waveform in the DDR memory
+        space = np.linspace (start = 0, stop = 0, num = seglen_space, endpoint =False)
+        space = amplitude * space
+        #=====================================================================#
+        
+        
+        signal_tot = np.concatenate ((y, space, tr), axis=None)  # put everything together
+        
+        
+        #===============Find the distances between the marker and the peaks========================#
+        
+        
+        distance = len(signal_tot) - seglen_triangle/2 - int_arg
+        distance_1stpeak_marker_in_time = distance/self.SCLK
+        distance_bw_2_peaks_in_time = seglen/num_of_periods/self.SCLK
+        print ('byte distance between the markers tip and the 1st crest :', distance)
+        print ('time distance between the markers tip and the 1st crest :', distance/self.SCLK)
+        # print ('time distance between two crests in bytes:', seglen/num_of_periods)
+        # print ('time distance between two crests in time [sec]:', seglen/num_of_periods/self.SCLK)
+        
 
-        return y
+        #=====================================================================#
+        
+        
+        #===============PLOT========================#
+        
+        if self.show_plot == True:
+            
+            fig1, (ax1) = plt.subplots(1, 1, figsize = (5, 3.5), dpi = 100)   ## define a plot
+            fig1, (ax2) = plt.subplots(1, 1, figsize = (5, 3.5), dpi = 100)   ## define a plot
+
+            ax1.plot(x,y,'-', color='#ffe24e',linewidth=1.5, label='The readout signal')
+            ax1.set_xlabel('Radians', fontsize=12)      ## Axis labels
+            ax1.set_ylabel('Amplitude', fontsize=12)
+            
+            ax2.plot(signal_tot,'-', color='b',linewidth=1.5, label='Signal + Marker')
+            ax2.set_xlabel('bytes', fontsize=12)      ## Axis labels
+            ax2.set_ylabel('Amplitude', fontsize=12)
+            
+            plt.tight_layout()  
+            
+            plt.legend()    
+            plt.show()
+        
+        #=====================================================================#
+            
+
+        return signal_tot, distance_1stpeak_marker_in_time, distance_bw_2_peaks_in_time
 
 
