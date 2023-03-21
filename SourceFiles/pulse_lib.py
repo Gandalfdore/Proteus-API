@@ -55,8 +55,7 @@ class Pulse():
         TAKES:
             Amplitude b/w [-1,1]
             frequency in [Hz]
-            Phase shift in [radians]
-            phase_shift - phase shift
+            phase_shift - in [radians]
 
         RETURNS: 
             The array that represents the signal
@@ -413,11 +412,10 @@ class Pulse():
         This method gives a readout pulse. It is a simple sinusoid.'''.
 
         TAKES: 
-            frequency in [Hz]
-            Phase shift in [radians]
-            SCLK - the sampling clock of the proteus
             Amplitude b/w [-1,1]
-            Show plot - whether to show a plot of the function or not
+            frequency in [Hz]
+            num_of_periods - how many periods long to be the readout
+            phase_shift - in [radians]
 
         RETURNS: 
             The array that represents the signal
@@ -426,10 +424,12 @@ class Pulse():
         seglen = self.SCLK/frequency ### how many DAC events needed to form one period of this function
         print ("original seglen:", seglen)
         
+        seglen = seglen * num_of_periods 
+        
         seglen = int(helpers.formatter(seglen)[0])
         print ("formated seglen:", seglen)
 
-        x = np.linspace(start=0, stop=2 * np.pi, num=seglen, endpoint=False) 
+        x = np.linspace(start=0, stop=2 * np.pi * num_of_periods, num=seglen, endpoint=False) 
 
         y = amplitude * np.sin(x + phase_shift)
 
