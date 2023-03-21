@@ -7,6 +7,11 @@ class Pulse():
     """This is a class containing all the pulses one may wish for."""
     
     def __init__ (self, SCLK, DUC_INTERP, show_plot = False):
+        """
+            SCLK - sampling clock rate [integer]
+            DUC_INTERP - the interpolation  [integer]
+            show_plot - to show a plot of the waveform or not [Boolean value]
+        """
         
         self.SCLK = SCLK
         self.DUC_INTERP = DUC_INTERP
@@ -19,9 +24,7 @@ class Pulse():
         signal in the system.
         
         TAKES:
-            SCLK - the sampling clock of the proteus
             DC bias - if you want to give a DC bias to the line signal, takes values from [-1 to 1]
-            Show plot - whether to show a plot of the function or not
             
         RETURNS: 
             The array that represents the signal
@@ -49,12 +52,11 @@ class Pulse():
         """
         This method gives a sinus signal.
 
-        TAKES: 
+        TAKES:
+            Amplitude b/w [-1,1]
             frequency in [Hz]
             Phase shift in [radians]
-            SCLK - the sampling clock of the proteus
-            Amplitude b/w [-1,1]
-            Show plot - whether to show a plot of the function or not
+            phase_shift - phase shift
 
         RETURNS: 
             The array that represents the signal
@@ -406,7 +408,37 @@ class Pulse():
     #=============================================================#
     
     
-#     def readout_pulse ():
-#         '''This pulse is used for readout. It is a simple sinusoid.'''
+    def readout_pulse (self, amplitude, frequency, num_of_periods, phase_shift = 0):
+        """
+        This method gives a readout pulse. It is a simple sinusoid.'''.
+
+        TAKES: 
+            frequency in [Hz]
+            Phase shift in [radians]
+            SCLK - the sampling clock of the proteus
+            Amplitude b/w [-1,1]
+            Show plot - whether to show a plot of the function or not
+
+        RETURNS: 
+            The array that represents the signal
+        """
+        
+        seglen = self.SCLK/frequency ### how many DAC events needed to form one period of this function
+        print ("original seglen:", seglen)
+        
+        seglen = int(helpers.formatter(seglen)[0])
+        print ("formated seglen:", seglen)
+
+        x = np.linspace(start=0, stop=2 * np.pi, num=seglen, endpoint=False) 
+
+        y = amplitude * np.sin(x + phase_shift)
+
+        if self.show_plot == True:
+            plt.plot(x,y)
+            plt.xlabel('Radians') 
+            plt.ylabel('Amplitude') 
+            plt.title('Sinus')
+
+        return y
 
 
