@@ -17,7 +17,7 @@ This text showcases the functionalities of the different tools of the API. These
 
 **connection_func ()** 
 
-	This function calls the initializatio nsequence for the Proteus.
+	This function calls the initialization sequence for the Proteus.
 
 INPUTS: 
 	None
@@ -57,7 +57,7 @@ OUTPUTS:
         None
 
 ===============================================================
-===============================================================
+===============================
 
 ## Pulse_lib
 
@@ -186,7 +186,7 @@ This library is independent of the Proteus machinery.
 
 
 ===============================================================
-===============================================================
+==========================
 
 ## Tasks
 
@@ -259,7 +259,7 @@ This library contains a the class that call method for the creation of tasktable
 
 
 ===============================================================
-===============================================================
+========================
 
 ## Helpers
 
