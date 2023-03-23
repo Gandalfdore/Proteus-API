@@ -6,6 +6,17 @@ import numpy as np
 
 
 def connection_func ():
+    """This function calls the initializatio nsequence for the Proteus.
+    
+    INPUTS: 
+        None
+
+    OUTPUTS: 
+        dac_mode - This is the single dataoint resolution mode of the DAC it can be 8 or 16-bit
+        max_dac - the total vertical resolution of the DAC
+        sid - the slot number of the machine (for connection)
+        data_type - 8-bit or 16-bit type of dac mode
+        inst - the instance that call the Proteus module"""
     
     print("\n=========CONNECTING=========")
 
@@ -85,6 +96,15 @@ def connection_func ():
     #=============================================================#
 
 def system_info_func(max_dac, inst):  
+    """This function gives some information about the system.
+    
+    INPUT:
+        max_dac - the total vertical resolution of the DAC
+        inst - the instance that calls the Proteus modules
+
+    OUTPUT:
+        None
+    """
     
     half_dac = max_dac // 2.0
     
@@ -118,6 +138,16 @@ def system_info_func(max_dac, inst):
     #=============================================================#
 
 def initialization_func(channel_numb, inst, SCLK):
+    """This fuction intializes or reinitializes if needed, the chosen channel of the Proteus.
+    
+    INPUT:
+        channel_numb - the channel number you want reinitialized
+        inst - the instance that calls the Proteus module s
+        SCLK - the sampling clock rate [1/sec]
+            
+    OUTPUTS:
+        None
+    """
     
     # Several initializations ..
 

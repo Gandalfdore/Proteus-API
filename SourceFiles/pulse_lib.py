@@ -16,7 +16,8 @@ class Pulse():
     def blank_signal (self, DC_bias = 0):
         
         # print ('blabla')
-        """This function gives DC signal. It is by default 0V to represent no 
+        """
+        This function gives DC signal. It is by default 0V to represent no 
         signal in the system.
         
         TAKES:
@@ -26,7 +27,8 @@ class Pulse():
             
         RETURNS: 
             The array that represents the signal
-            The segment length of the waveform"""
+            The segment length of the waveform
+        """
             
         seglen = 2048  # the smallest available signal length in the proteus
         
@@ -270,7 +272,8 @@ class Pulse():
         OUTPUTS:
             I component of the signal
             Q component of the signal
-            Sin_envelope - the envelope of the pulse """
+            Sin_envelope - the envelope of the pulse 
+            """
 
         if self.DUC_INTERP != 1:
             print ('====Attention the DUC Interpreter has a value different then 1!===='.format(self.DUC_INTERP))

@@ -138,25 +138,33 @@ def download_func (inst, wave, channel, segment):
     
     
     
-    def task_starter (inst, channel):
-        """Here we ins"""
-        
-        # define the operation mode
-        cmd = 'FUNC:MODE TASK'
-        inst.send_scpi_cmd(cmd)
+def task_starter (inst, channel):
+    """Here we instantiate the channel and all the tasks put in it.
 
-        # point to the channel
-        cmd = ':INST:CHAN {0}'.format(channel)
-        inst.send_scpi_cmd(cmd)
+    INPUT:
+        inst - the instance of the open instrument command
+        channel - the number of the channel, could take values - [1,2,3,4]
 
-        # start the output
-        cmd = ':OUTP ON'
-        inst.send_scpi_cmd(cmd)
+    OUTPUT: 
+        None
+    """
 
-        # see if any errors came up
-        resp = inst.send_scpi_query(':SYST:ERR?')
-        print(resp)
-    
+    # define the operation mode
+    cmd = 'FUNC:MODE TASK'
+    inst.send_scpi_cmd(cmd)
+
+    # point to the channel
+    cmd = ':INST:CHAN {0}'.format(channel)
+    inst.send_scpi_cmd(cmd)
+
+    # start the output
+    cmd = ':OUTP ON'
+    inst.send_scpi_cmd(cmd)
+
+    # see if any errors came up
+    resp = inst.send_scpi_query(':SYST:ERR?')
+    print(resp)
+
     
     
     
