@@ -1,5 +1,4 @@
 
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 import helpers
@@ -8,6 +7,11 @@ class Pulse():
     """This is a class containing all the pulses one may wish for."""
     
     def __init__ (self, SCLK, DUC_INTERP, show_plot = False):
+        """
+            SCLK - sampling clock rate [integer]
+            DUC_INTERP - the interpolation  [integer]
+            show_plot - to show a plot of the waveform or not [Boolean value]
+        """
         
         self.SCLK = SCLK
         self.DUC_INTERP = DUC_INTERP
@@ -21,9 +25,7 @@ class Pulse():
         signal in the system.
         
         TAKES:
-            SCLK - the sampling clock of the proteus
             DC bias - if you want to give a DC bias to the line signal, takes values from [-1 to 1]
-            Show plot - whether to show a plot of the function or not
             
         RETURNS: 
             The array that represents the signal
@@ -52,12 +54,10 @@ class Pulse():
         """
         This method gives a sinus signal.
 
-        TAKES: 
-            frequency in [Hz]
-            Phase shift in [radians]
-            SCLK - the sampling clock of the proteus
+        TAKES:
             Amplitude b/w [-1,1]
-            Show plot - whether to show a plot of the function or not
+            frequency in [Hz]
+            phase_shift - in [radians]
 
         RETURNS: 
             The array that represents the signal
@@ -89,11 +89,13 @@ class Pulse():
     
     
     
-    def gaussian_pulse (self, amplitude, sigma, width_over_sigma, frequency):
+    def gaussian_pulse (self, I, Q, amplitude, sigma, width_over_sigma, frequency):
         """
         This method preapares a gaussian pulse.
         
         INPUTS:
+            I - 1st quadrature amplitude
+            Q - 2nd quadrature amplitude
             amplitude - the amplitude scaler of the signal, takes value [0 to 1]
             sigma - the sigma of the gaussian in [sec]
             width_over_sigma - how many sigmas wide is the pulse [sec] RECOMENDED VALUE == 4 or 5
@@ -150,8 +152,11 @@ class Pulse():
         sin = np.sin(2*np.pi*t*GAUS_FC)
         cos = np.cos(2*np.pi*t*GAUS_FC)
         gaussian = amplitude * (1/ss/np.sqrt(2*np.pi)/2) * np.exp(-(t**2)/2/(ss**2)) / normalization_factor
-        (i) = sin*gaussian
-        (q) = cos*gaussian
+        (i) = I*sin*gaussian
+        (q) = Q*cos*gaussian
+        
+        # phase_shift = np.arctan(I/Q)
+        # magn = np.sqrt(I**2 + Q**2)*np.sin(2*np.pi*t*GAUS_FC + phase_shift)*gaussian
         magn = (i) + (q)
         ####################
 
@@ -172,11 +177,13 @@ class Pulse():
     
     
     
-    def gaussian_drag_pulse (self, amplitude, sigma, width_over_sigma, beta, frequency):
+    def gaussian_drag_pulse (self, I, Q, amplitude, sigma, width_over_sigma, beta, frequency):
         """
         This method preapares a gaussian pulse with DRAG.
         
         INPUTS:
+            I - 1st quadrature amplitude
+            Q - 2nd quadrature amplitude
             amplitude - the amplitude scaler of the signal, takes value [0 to 1]
             sigma - the sigma of the gaussian in [sec]
             width_over_sigma - how many sigmas wide is the pulse [sec] RECOMENDED VALUE == 4 or 5
@@ -238,8 +245,9 @@ class Pulse():
         cos = np.cos(2*np.pi*t*GAUS_FC)
         gaussian = amplitude * (1/ss/np.sqrt(2*np.pi)/2) * np.exp(-(t**2)/2/(ss**2)) / normalization_factor
         gaussian_dragged = amplitude * (1 - beta*t/ss*2) * (1/ss/np.sqrt(2*np.pi)/2) * np.exp(-(t**2)/2/(ss**2)) / normalization_factor
-        (i) = sin*gaussian
-        (q) = cos*gaussian_dragged
+        (i) = I*sin*gaussian
+        (q) = Q*cos*gaussian_dragged
+        
         magn = (i) + (q)
         ####################
 
@@ -402,7 +410,116 @@ class Pulse():
     #=============================================================#
     
     
-#     def readout_pulse ():
-#         '''This pulse is used for readout. It is a simple sinusoid.'''
+    def readout_pulse (self, amplitude, frequency, num_of_periods, phase_shift = 0):
+        """
+        This method gives a readout pulse. It is a simple sinusoid.'''.
+
+        TAKES: 
+            Amplitude b/w [-1,1]
+            frequency in [Hz]
+            num_of_periods - how many periods long to be the readout
+            phase_shift - in [radians]
+
+        RETURNS: 
+            seglen_tot - The array that represents the signal
+            distance_1stpeak_marker_in_time - time distance between the marker's tip and the 1st crest [sec]
+            distance_bw_2_peaks_in_time - time distance between two crests in time [sec]
+        """
+        
+        seglen = self.SCLK/frequency ### how many DAC events needed to form one period of this function
+        print ("original seglen:", seglen)
+        
+        seglen = int(helpers.formatter(seglen)[0])
+        # print ("formated seglen:", seglen)
+        
+        seglen = seglen * num_of_periods
+        print ("formated seglen:", seglen)
+
+        x = np.linspace(start= 0, stop=2 * np.pi * num_of_periods, num=seglen, endpoint=False) 
+
+        y = amplitude * np.sin(x + phase_shift)
+
+        # if self.show_plot == True:
+        #     plt.plot(x,y)
+        #     plt.xlabel('Radians') 
+        #     plt.ylabel('Amplitude') 
+        #     plt.title('Sinus')
+            
+        #===============Indexes of the sin peaks========================#
+        
+        
+        phase_shift_bytes = int((phase_shift/2/np.pi)*(seglen/num_of_periods))
+        
+        arg = seglen/4/num_of_periods - phase_shift_bytes
+        int_arg = int(arg)
+        # int_arg2 = int_arg + seglen/num_of_periods
+        
+        # print('bytes of phase shift:', phase_shift_bytes)
+        # print('index of the peak:', int_arg, 'y value of the arg', y[int_arg])
+        # print('index of the 2nd peak:', int_arg2, 'y value of 2nd peak', y[int(int_arg2)])
+        
+        #=====================================================================#
+        
+        
+        #===============Create the marker bump (triangle shaped)========================#
+        
+        seglen_triangle = 2048 # the smallest chunck available for waveform in the DDR memory
+        tr1 = np.linspace (start = 0, stop = 1, num = int(seglen_triangle/2), endpoint =False)
+        tr2 = np.linspace (start = 1, stop = 0, num = int(seglen_triangle/2), endpoint =False)
+        tr = np.concatenate((tr1, tr2), axis=None)
+        tr = amplitude * tr
+        #=====================================================================#
+        
+        
+        #===============Create some space between them (not mandatory)========================#
+        
+        seglen_space = 10*2048 # the smallest chunck available for waveform in the DDR memory
+        space = np.linspace (start = 0, stop = 0, num = seglen_space, endpoint =False)
+        space = amplitude * space
+        #=====================================================================#
+        
+        
+        signal_tot = np.concatenate ((y, space, tr), axis=None)  # put everything together
+        
+        
+        #===============Find the distances between the marker and the peaks========================#
+        
+        
+        distance = len(signal_tot) - seglen_triangle/2 - int_arg
+        distance_1stpeak_marker_in_time = distance/self.SCLK
+        distance_bw_2_peaks_in_time = seglen/num_of_periods/self.SCLK
+        print ('byte distance between the markers tip and the 1st crest :', distance)
+        print ('time distance between the markers tip and the 1st crest :', distance/self.SCLK)
+        # print ('time distance between two crests in bytes:', seglen/num_of_periods)
+        # print ('time distance between two crests in time [sec]:', seglen/num_of_periods/self.SCLK)
+        
+
+        #=====================================================================#
+        
+        
+        #===============PLOT========================#
+        
+        if self.show_plot == True:
+            
+            fig1, (ax1) = plt.subplots(1, 1, figsize = (5, 3.5), dpi = 100)   ## define a plot
+            fig1, (ax2) = plt.subplots(1, 1, figsize = (5, 3.5), dpi = 100)   ## define a plot
+
+            ax1.plot(x,y,'-', color='#ffe24e',linewidth=1.5, label='The readout signal')
+            ax1.set_xlabel('Radians', fontsize=12)      ## Axis labels
+            ax1.set_ylabel('Amplitude', fontsize=12)
+            
+            ax2.plot(signal_tot,'-', color='b',linewidth=1.5, label='Signal + Marker')
+            ax2.set_xlabel('bytes', fontsize=12)      ## Axis labels
+            ax2.set_ylabel('Amplitude', fontsize=12)
+            
+            plt.tight_layout()  
+            
+            plt.legend()    
+            plt.show()
+        
+        #=====================================================================#
+            
+
+        return signal_tot, distance_1stpeak_marker_in_time, distance_bw_2_peaks_in_time
 
 
