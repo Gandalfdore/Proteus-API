@@ -400,50 +400,66 @@ class Pulse():
     #=============================================================#
     #=============================================================#
     #=============================================================#
-    
-    
-    def gaussian_I_Q (self, amplitude = float, width = float, sigma = float, beta = float):
-        
+
+
+    def gaussian_I_Q_with_IF (self, IF_frequency = float, amplitude = float, width = float, sigma = float, beta = float):
+
         """This method creates envelopes of I and Q signals to be fed to a IQ mixer.
-        The I and Q signals are made in such a way that the aplitude of the signal is gaussian and its phase is gaussian derrivative.
+        The I and Q signals are made in such a way that the aplitude of the signal is gaussian
+        and its phase is gaussian derrivative.
         A.k.a this implements a DRAG gaussian pulse.
-        
+
         INPUTS:
             amplitude - the amplitude scaler of the signal, takes value [0 to 1]
             width -  width of the gaussian in [sec]
             sigma - the sigma of the gaussian [sec]
-            beta - the DRAG coefficient
+            beta - The DRAG coefficient / ALPHA   
 
         OUTPUTS:
-            I component of the signal
-            Q component of the signal
+            I - envelope I component of the signal
+            Q - envelope Q component of the signal
+            I_mod - modulated I component of the signal
+            Q_mod - modulated Q component of the signal
+
+        NOTES:
+            ALPHA  is the anharmonicity = omega12 - omega01, normally about 200-300 MHz
+            The DRAG coefficient - should theoretically be 0.5, for optimal phase correction  
+
         """
-        
-        delta_t = 1*self.DUC_INTERP/self.SCLK # how much time is there b/w 2 consecutive datapoints
-        
+
+        delta_t = self.DUC_INTERP/self.SCLK # how much time is there b/w 2 consecutive datapoints
+
+        ################ THE ENVELOPE ######
+
         segment_length = width / delta_t # how many dataponts we would need to express the signal
         segment_length = int(segment_length) # round it up
-        
+
         how_many_sigmas_wide = width/sigma
-        
-        x = np.linspace (-how_many_sigmas_wide/2, how_many_sigmas_wide/2, segment_length)
-        
-        A = np.exp(-(x**2)/2/(sigma**2)) # Amplitude
+
+        x = np.linspace (-width/2, width/2, segment_length)
+
+        A = amplitude * np.exp(-(x**2)/2/(sigma**2)) # Amplitude
         phase = (beta*x/(sigma**2)) * np.exp(-(x**2)/2/(sigma**2)) # Phase
-        
-        I = A * np.sin(phase)  
-        Q = A * np.cos(phase)
-        
+
+        I = A * np.cos(phase)  
+        Q = A * np.sin(phase)
+
+        ################# THE IF SINGAL ########
+
+        y = np.linspace (-(np.pi*IF_frequency*width), (np.pi*IF_frequency*width), segment_length)
+        print (segment_length)
+
+        I_mod = I*np.cos(y) + Q*np.sin(y)
+        Q_mod = Q*np.cos(y) - I*np.sin(y)
+
         if self.show_plot == True:
             plt.plot(x, I, '-', x, Q, '-')
-            plt.legend(['I','Q'])
-        
-        return I, Q
-        
-        
-    
-    
-#     def readout_pulse ():
-#         '''This pulse is used for readout. It is a simple sinusoid.'''
+            plt.legend(['I envelope','Q envelope'])
 
+        return I, Q, I_mod, Q_mod
+
+
+        #=============================================================#
+        #=============================================================#
+        #=============================================================#
 
