@@ -402,7 +402,7 @@ class Pulse():
     #=============================================================#
 
 
-    def gaussian_I_Q_with_IF (self, IF_frequency = float, amplitude = float, width = float, sigma = float, beta = float):
+    def gaussian_I_Q_with_IF (self, IF_frequency = float, amplitude = float, width = float, sigma = float, beta = float, I_to_Q_ratio = 1.0):
 
         """This method creates envelopes of I and Q signals to be fed to a IQ mixer.
         The I and Q signals are made in such a way that the aplitude of the signal is gaussian
@@ -414,6 +414,7 @@ class Pulse():
             width -  width of the gaussian in [sec]
             sigma - the sigma of the gaussian [sec]
             beta - The DRAG coefficient / ALPHA   
+            I_to_Q_ratio - I/Q ratio, by default '1.0', can take any float value
 
         OUTPUTS:
             I - envelope I component of the signal
@@ -429,7 +430,7 @@ class Pulse():
 
         delta_t = self.DUC_INTERP/self.SCLK # how much time is there b/w 2 consecutive datapoints
 
-        ################ THE ENVELOPE ######
+        ################ THE ENVELOPE ############
 
         segment_length = width / delta_t # how many dataponts we would need to express the signal
         segment_length = int(segment_length) # round it up
@@ -442,7 +443,7 @@ class Pulse():
         phase = (beta*x/(sigma**2)) * np.exp(-(x**2)/2/(sigma**2)) # Phase
 
         I = A * np.cos(phase)  
-        Q = A * np.sin(phase)
+        Q = A * (1/I_to_Q_ratio) * np.sin(phase)
 
         ################# THE IF SINGAL ########
 
