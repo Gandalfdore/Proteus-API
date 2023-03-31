@@ -170,3 +170,33 @@ def initialization_func(channel_numb, inst, SCLK):
     #=============================================================#
     #=============================================================#
     #=============================================================#
+    
+    
+def initialization_func_IQ(channel_numb, inst, SCLK, SOURCE_NCO):
+    """This fuction intializes or reinitializes if needed, the chosen channel of the Proteus for IQ processes.
+    
+    INPUT:
+        channel_numb - the channel number you want reinitialized
+        inst - the instance that calls the Proteus module s
+        SCLK - the sampling clock rate [1/sec]
+        SOURCE_NCO - the NCO frequency of the source [1/sec]
+            
+    OUTPUTS:
+        None
+    """
+    
+    #FIRST CHANNEL SETTINGS
+    inst.send_scpi_cmd('INST:CHAN {0}'.format(channel_numb)) # instantiate channel 1
+    inst.send_scpi_cmd(':TRAC:DEL:ALL') # delete unnecessary old data
+    inst.send_scpi_cmd(':SOUR:MODE DUC') # start in DUX mode (this wiil enable interpolation and IQ mixing)
+    inst.send_scpi_cmd(':SOUR:INT X8') # set Proteus to interpolation X8.
+    inst.send_scpi_cmd(':SOUR:IQM ONE') # set modulation to IQ Modulation type ONE
+
+    #---------------------------------------------------------------------
+    #Play selected segment in selected channel and set amplitude
+    #---------------------------------------------------------------------
+    #Set sampling rate for the AWG
+    inst.send_scpi_cmd(':FREQ:RAST {0}'.format(SCLK))
+    inst.send_scpi_cmd(':NCO:CFR1 {0}'.format(SOURCE_NCO)) # set NCO frequency of CH1 to some value  !!!! USE THE SAME IN THE DDC CFR1
+    inst.send_scpi_cmd(':VOLT MAX')
+    inst.send_scpi_cmd(':NCO:SIXD1 ON')

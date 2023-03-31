@@ -15,7 +15,6 @@ class Pulse():
         
     def blank_signal (self, DC_bias = 0):
         
-        # print ('blabla')
         """
         This function gives DC signal. It is by default 0V to represent no 
         signal in the system.
@@ -321,9 +320,9 @@ class Pulse():
     #=============================================================#
     #=============================================================#
 
-    def rabi_pulse (self, amplitude, width_slope, width_plateau, frequency):
+    def trapezoid_pulse (self, amplitude, width_slope, width_plateau, frequency):
         """
-        This funtion prepares a sin shaped pulse.
+        This funtion prepares a trapezoid shaped pulse.
 
         INPUTS:
             amplitude - the amplitude scaler of the signal, takes value [0 to 1]
@@ -334,8 +333,8 @@ class Pulse():
         OUTPUTS:
             I component of the signal
             Q component of the signal
-            Rabi_signal - this is just the envelope of the pulse
-            """
+            Trapezoid_signal - this is just the envelope of the pulse
+        """
 
         if self.DUC_INTERP != 1:
             print ('====Attention the DUC Interpreter has a value different then 1!===='.format(self.DUC_INTERP))
@@ -356,8 +355,8 @@ class Pulse():
 
         tot_seglen = 2*delta_bytes_slope + delta_bytes_plateau
 
-        print("Rabi pulse segement length = {0} datapoints\n".format(tot_seglen))
-        print("Rabi pulse segement length (in time) = {0} [ns]]".format((2*width_slope + width_plateau)*1e9))
+        print("Trapezoid pulse segement length = {0} datapoints\n".format(tot_seglen))
+        print("Trapezoid pulse segement length (in time) = {0} [ns]]".format((2*width_slope + width_plateau)*1e9))
 
         t = np.linspace(start= 0, stop= 1, num = tot_seglen, endpoint= False) 
 
@@ -369,10 +368,10 @@ class Pulse():
 
         plateau = np.linspace (1, 1, delta_bytes_plateau)
 
-        rabi_signal = np.concatenate ((upward_slope, plateau, downward_slope), axis = 0)
-        rabi_signal = amplitude * rabi_signal
+        trapezoid_signal = np.concatenate ((upward_slope, plateau, downward_slope), axis = 0)
+        trapezoid_signal = amplitude * trapezoid_signal
 
-        print ('sin:',len(t),'rabi_signal:',len(rabi_signal))
+        print ('sin:',len(t),'trapezoid_signal:',len(trapezoid_signal))
 
         #########################################
 
@@ -384,8 +383,8 @@ class Pulse():
         sin = np.sin(2*np.pi*t*FC)
         cos = np.cos(2*np.pi*t*FC)
 
-        (i) = sin*rabi_signal
-        (q) = cos*rabi_signal
+        (i) = sin*trapezoid_signal
+        (q) = cos*trapezoid_signal
         ####################
 
         if self.show_plot == True:
@@ -393,7 +392,7 @@ class Pulse():
             plt.legend(['I','Q'])
 
 
-        return (i), (q), rabi_signal
+        return (i), (q), trapezoid_signal
     
     
     
@@ -404,7 +403,8 @@ class Pulse():
 
     def gaussian_I_Q_with_IF (self, IF_frequency = float, amplitude = float, width = float, sigma = float, beta = float, I_to_Q_ratio = 1.0):
 
-        """This method creates envelopes of I and Q signals to be fed to a IQ mixer.
+        """
+        This method creates envelopes of I and Q signals to be fed to a IQ mixer.
         The I and Q signals are made in such a way that the aplitude of the signal is gaussian
         and its phase is gaussian derrivative.
         A.k.a this implements a DRAG gaussian pulse.
@@ -463,4 +463,128 @@ class Pulse():
         #=============================================================#
         #=============================================================#
         #=============================================================#
+        
+    def blank_signal_arbitrary (self, time, DC_bias = 0):
+        
+        # print ('blabla')
+        """
+        This function gives DC signal. It is by default 0V to represent no 
+        signal in the system.
+        
+        TAKES:
+            DC bias - if you want to give a DC bias to the line signal, takes values from [-1 to 1]
+            time - time length of the signal in [sec]
+            
+        RETURNS: 
+            The array that represents the signal
+            The segment length of the waveform
+        """
+        
+        delta_t = 1/self.SCLK
+        
+        seglen = time/delta_t 
+        
+        print ("The blank singnal is with time width:",time, "[sec]")
+        print ("\nThe blank singnal is with segment length:",seglen)
+        
+        if float.is_integer(seglen) == False:
+            
+            seglen = int(seglen)
+            print("\nSegment length was not an integer number, thus it will be rounded to the closest integer.")
+            print("\nThe closest time width that the format allows is {0} sec".format(delta_t*seglen))
+        
+        else:
+            seglen = int(seglen)
+            
 
+        x = np.linspace(start=1, stop=1, num=seglen, endpoint=False)
+        y= DC_bias*x
+
+        if self.show_plot == True:
+            plt.plot(x,y)
+
+        return y
+    
+    
+    #=============================================================#
+    #=============================================================#
+    #=============================================================#
+
+
+    
+    def readout_pulse (self, amplitude, width_slope, width_plateau, frequency):
+        """
+        This funtion prepares a trapezoid shaped pulse for readout.
+
+        INPUTS:
+            amplitude - the amplitude scaler of the signal, takes value [0 to 1]
+            width_slope -  width of the slope part of the pulse in [sec]
+            width_plateau - width of the plateau part of the pulse in [sec]
+            frequency - of the signal in [Hz]
+
+        OUTPUTS:
+            I component of the signal
+            Q component of the signal
+            readout_signal - this is just the envelope of the pulse
+        """
+
+        if self.DUC_INTERP != 1:
+            print ('====Attention the DUC Interpreter has a value different then 1!===='.format(self.DUC_INTERP))
+
+        frequency = frequency / self.DUC_INTERP
+        # SCLK = SCLK/2.5
+
+        period = 1/frequency
+        delta_t = 1/self.SCLK ### how much time between each two sequential signal points
+
+        print ("period = {0}[ns]".format(period*1e9))
+
+        delta_bytes_slope = int(width_slope*self.SCLK)
+        delta_bytes_plateau = int(width_plateau*self.SCLK)
+
+        tot_seglen = 2*delta_bytes_slope + delta_bytes_plateau
+
+        print("readout pulse segement length = {0} datapoints\n".format(tot_seglen))
+        print("readout pulse segement length (in time) = {0} [ns]]".format((2*width_slope + width_plateau)*1e9))
+
+        t = np.linspace(start= 0, stop= 1, num = tot_seglen, endpoint= False) 
+
+        ############## The envelope generation ##############
+        upward_slope = np.linspace (0, np.pi/2, delta_bytes_slope)
+        upward_slope = np.sin (upward_slope)
+
+        downward_slope = np.flip (upward_slope)
+
+        plateau = np.linspace (1, 1, delta_bytes_plateau)
+
+        readout_signal = np.concatenate ((upward_slope, plateau, downward_slope), axis = 0)
+        readout_signal = amplitude * readout_signal
+
+        print ('sin:',len(t),'readout_signal:',len(readout_signal))
+
+        #########################################
+
+        FC = 5 * frequency * tot_seglen * self.DUC_INTERP /2 / self.SCLK
+
+        print('Signal frequency = {0}[Mhz]'.format(frequency / 1e6))  # the actual frequency of the sin wave in the gaussian
+
+        ####################
+        sin = np.sin(2*np.pi*t*FC)
+        cos = np.cos(2*np.pi*t*FC)
+
+        (i) = sin*readout_signal
+        (q) = cos*readout_signal
+        ####################
+
+        if self.show_plot == True:
+            plt.plot(t, (i), '-',t, (q), '-')
+            plt.legend(['I','Q'])
+
+
+        return (i), (q), readout_signal
+    
+    
+    
+    #=============================================================#
+    #=============================================================#
+    #=============================================================#

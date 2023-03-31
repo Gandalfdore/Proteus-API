@@ -1,4 +1,5 @@
 import os
+import math
 from teproteus import TEProteusAdmin as TepAdmin
 from teproteus import TEProteusInst as TepInst
 import numpy as np
@@ -177,11 +178,12 @@ def concatenator (*array):
     
     """
     This function takes any number of arrays as arguments.
+    
     INPUT:
         Arrays
+        
     OUTPUT:
         Concatonated array
-        Length of the concatenated array
     """
     
     print ('{0} of datasegments given.\n'.format(len(array)))
@@ -193,7 +195,7 @@ def concatenator (*array):
         
     print ("The length of the new dataset is:", len(l))
     
-    return l, len(l)
+    return l
 
 
     
@@ -261,3 +263,29 @@ def IQ_interleaver(I_array, Q_array):
         inter_array[1+i*2] = Q[i]
     
     return inter_array
+
+
+
+    #=============================================================#
+    #=============================================================#
+    #=============================================================#
+
+    
+    
+def formatter_for_sequences (num):
+    """
+    This function take an arbitrary number and returns how much more does it need to conform to the format: ( 64 * (32 + n))
+    
+    TAKES: 
+        Integer (or float) number
+        
+    RETURNS: 
+        The remant  
+    """
+    
+    num_old = num
+    n = -32.0 + num/64.
+    new_num = 64*(math.ceil(n) + 32)
+    remnant = new_num - num
+        
+    return remnant
