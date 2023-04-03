@@ -81,7 +81,9 @@ def digitizer_setup(inst, DIG_SCLK, DDC_NCO, time_delay):
 
 def framer(inst, numframes = int, framelen = int):
     
-    """This function defines the number of frames and the length of each frame on would like to use for capturing of the digitized data.
+    """
+    
+    This function defines the number of frames and the length of each frame on would like to use for capturing of the digitized data.
     
     INUT:
         inst - the proteus instance

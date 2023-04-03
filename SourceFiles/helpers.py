@@ -272,7 +272,7 @@ def IQ_interleaver(I_array, Q_array):
 
     
     
-def formatter_for_sequences (num):
+def formatter_for_sequences(num):
     """
     This function take an arbitrary number and returns how much more does it need to conform to the format: ( 64 * (32 + n))
     

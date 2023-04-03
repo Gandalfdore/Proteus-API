@@ -173,7 +173,8 @@ def initialization_func(channel_numb, inst, SCLK):
     
     
 def initialization_func_IQ(channel_numb, inst, SCLK, SOURCE_NCO):
-    """This fuction intializes or reinitializes if needed, the chosen channel of the Proteus for IQ processes.
+    """
+    This fuction intializes or reinitializes if needed, the chosen channel of the Proteus for IQ processes.
     
     INPUT:
         channel_numb - the channel number you want reinitialized
