@@ -37,7 +37,7 @@ Clone the repository into your local machine and open the \Notebooks\Signal_gene
 
 ### The libraries (located in SourceFiles) are separated in two parts:
 
-* Libraries written by your truly for the quntum computing purposes (these define the API):
+* Libraries written by yours truly for the quantum computing purposes (these define the API):
 	* initializers
 	* tasks
 	* pulse_lib
