@@ -16,7 +16,7 @@ Clone the repository into your local machine and open the \Notebooks\Signal_gene
 
 ## Table of Contents
 
-### Sample code, to demonstrate the execution of the device's capabilities (especially for qunatum computing application), this would inculde:
+### Sample code, to demonstrate the execution of the device's capabilities (especially for quantum computing applications), this would inculde:
 
 * Device initializations
 
